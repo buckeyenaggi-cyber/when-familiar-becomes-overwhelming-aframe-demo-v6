@@ -1,0 +1,232 @@
+/* 01 基础页面与开场面板 */
+:root {
+  --overload: 0;
+  --warm: #ff934c;
+  --ink: #eef2f0;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #06080a;
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.overlay-card {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 28px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(49, 58, 62, .78), rgba(5, 7, 8, .96) 62%),
+    #07090a;
+  transition: opacity 700ms ease, visibility 700ms;
+}
+
+.overlay-card.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  color: #d0a17e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .22em;
+}
+
+h1 {
+  margin: 0;
+  max-width: 760px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(42px, 7vw, 88px);
+  font-weight: 400;
+  line-height: .91;
+  letter-spacing: -.055em;
+}
+
+#loadText {
+  margin: 30px 0 10px;
+  color: #bbc3c1;
+  font-size: 13px;
+}
+
+.load-track {
+  width: min(360px, 76vw);
+  height: 2px;
+  margin-bottom: 22px;
+  overflow: hidden;
+  background: rgba(255,255,255,.13);
+}
+
+.load-track span {
+  display: block;
+  width: 32%;
+  height: 100%;
+  background: var(--warm);
+  animation: loading 1.8s ease-in-out infinite;
+}
+
+.load-track span.is-ready {
+  width: 100%;
+  animation: none;
+  background: #a6dfcf;
+  transition: width 450ms ease, background 450ms;
+}
+
+@keyframes loading {
+  0% { transform: translateX(-105%); }
+  55% { transform: translateX(215%); }
+  100% { transform: translateX(325%); }
+}
+
+button {
+  min-width: 230px;
+  padding: 13px 20px;
+  border: 1px solid rgba(255,255,255,.34);
+  border-radius: 999px;
+  color: #0c1110;
+  background: #d7e5df;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  cursor: pointer;
+  transition: transform 180ms ease, opacity 180ms ease, background 180ms ease;
+}
+
+button:not(:disabled):hover { transform: translateY(-2px); background: white; }
+button:disabled { cursor: wait; opacity: .28; }
+
+.controls {
+  margin: 17px 0 0;
+  color: #858f8c;
+  font-size: 11px;
+  letter-spacing: .035em;
+}
+
+/* 02 行进中的阶段与互动提示 */
+#hud {
+  position: fixed;
+  z-index: 12;
+  left: 24px;
+  top: 22px;
+  width: min(310px, calc(100vw - 48px));
+  opacity: 0;
+  transform: translateY(-7px);
+  pointer-events: none;
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+
+body.is-playing #hud { opacity: 1; transform: none; }
+
+.hud-top { display: flex; align-items: center; gap: 12px; }
+#stageNumber { font: 400 38px/1 Georgia, serif; color: rgba(255,255,255,.44); }
+.hud-top small { display: block; margin-bottom: 3px; color: #9aa19f; font-size: 8px; letter-spacing: .19em; }
+.hud-top strong { display: block; font-size: 11px; letter-spacing: .14em; }
+
+#message {
+  min-height: 18px;
+  margin: 14px 0 10px;
+  color: #d8dddb;
+  font-size: 12px;
+  text-shadow: 0 1px 8px #000;
+}
+
+#progressDots { display: flex; gap: 6px; }
+#progressDots i {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: rgba(255,255,255,.21);
+  transition: background 350ms ease, box-shadow 350ms ease;
+}
+#progressDots i.done { background: var(--warm); box-shadow: 0 0 9px var(--warm); }
+#progressDots i.active { background: #f7d3b4; animation: dotPulse 1.5s ease-in-out infinite; }
+@keyframes dotPulse { 50% { opacity: .35; } }
+
+#reticle {
+  position: fixed;
+  z-index: 10;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2px;
+  border: 1px solid rgba(255,255,255,.62);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+body.is-playing #reticle { opacity: .72; }
+
+/* 03 门口阶段标题的淡入淡出 */
+#thresholdCard {
+  position: fixed;
+  z-index: 16;
+  left: 50%;
+  top: 50%;
+  color: white;
+  font: 400 clamp(24px, 4vw, 52px)/1 Georgia, serif;
+  letter-spacing: -.025em;
+  opacity: 0;
+  transform: translate(-50%, -42%);
+  pointer-events: none;
+  text-align: center;
+}
+
+#thresholdCard.show { animation: thresholdTitle 2.2s ease both; }
+@keyframes thresholdTitle {
+  0% { opacity: 0; transform: translate(-50%, -38%); }
+  24%, 62% { opacity: .92; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, -58%); }
+}
+
+/* 中文说明：全屏过曝层。渐进变化来自 sensory-fx，不用周期闪白动画。 */
+#fxWhite, #fade {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: #fff;
+}
+#fxWhite {
+  z-index: 18;
+  opacity: var(--whiteout, 0);
+}
+#fade { z-index: 14; opacity: 0; }
+#fade.flash { animation: doorwayFlash 1100ms ease both; }
+@keyframes doorwayFlash { 0%, 100% { opacity: 0; } 44% { opacity: .08; } }
+@media (max-width: 640px) {
+  #hud { left: 16px; top: 16px; }
+  .controls { max-width: 270px; line-height: 1.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* 中文说明：音量条始终可操作；进入后显示，M 键可以随时静音。 */
+#audioControl { position:fixed; z-index:24; bottom:20px; right:22px; display:none; align-items:center; gap:10px; padding:9px 13px; border-radius:20px; background:rgba(22,27,27,.65); color:#e8eded; font-size:11px; }
+body.is-playing #audioControl { display:flex; }
+#audioControl input { width:95px; accent-color:#e4d6bf; }
+#audioControl span { opacity:.65; }
+#audioStatus:empty { display:none; }
+#audioStatus { position:absolute; bottom:40px; right:0; width:260px; }

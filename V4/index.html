@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>When Familiar Becomes Overwhelming</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="vendor/aframe.min.js"></script>
+  <script src="js/sensory-fx.js"></script>
+  <script src="js/soundscape.js"></script>
+  <script src="js/app.js"></script>
+</head>
+<body>
+  <section id="entry" class="overlay-card">
+    <p class="eyebrow">DESIGN 4106 · SCANNED WORLD</p>
+    <h1>When Familiar<br>Becomes Overwhelming</h1>
+    <p id="loadText">Loading the new corridor model…</p>
+    <div class="load-track"><span id="loadBar"></span></div>
+    <button id="enterButton" disabled>ENTER THE CORRIDOR</button>
+    <p class="controls">WASD to walk · Mouse to look · Walk into the warm objects</p>
+  </section>
+
+  //中文说明：阶段提示与音量控制独立于三维模型.//
+  <div id="audioControl"><label for="volume">Sound</label><input id="volume" type="range" min="0" max="1" step="0.01" value="0.72" aria-label="Sound volume"><span>M mute</span><small id="audioStatus" role="status"></small></div>
+
+  <aside id="hud" aria-live="polite">
+    <div class="hud-top">
+      <span id="stageNumber">01</span>
+      <div><small>CURRENT STATE</small><strong id="stageName">FAMILIAR</strong></div>
+    </div>
+    <p id="message">Follow the breathing light.</p>
+    <div id="progressDots" aria-label="interaction progress">
+      <i></i><i></i><i></i><i></i>
+    </div>
+  </aside>
+
+  <div id="reticle" aria-hidden="true"></div>
+  <div id="thresholdCard" aria-live="polite"><span></span></div>
+  //全屏白色覆盖层：只接收 sensory-fx 中的渐进数值.//
+  <div id="fxWhite" aria-hidden="true"></div>
+  <div id="fade" aria-hidden="true"></div>
+
+  <a-scene
+    id="scene"
+    game-manager
+    sensory-fx
+    embedded
+    loading-screen="enabled: false"
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true; logarithmicDepthBuffer: true"
+    fog="type: exponential; color: #11151a; density: 0.006"
+    background="color: #07090c"
+    vr-mode-ui="enabled: false">
+
+    <a-assets timeout="90000">
+      <a-asset-item id="corridorAsset" src="models/corridor.glb"></a-asset-item>
+    </a-assets>
+
+    //场景模型：只使用新版走廊 GLB，通过上移 1.68 米将扫描地面对齐.//
+    <a-gltf-model
+      id="corridor"
+      src="#corridorAsset"
+      position="0 1.68 0"
+      shadow="cast: false; receive: true">
+    </a-gltf-model>
+
+    <a-entity light="type: ambient; color: #dbe3e8; intensity: 0.72"></a-entity>
+    <a-entity id="worldLight" position="2 3 -12" light="type: directional; color: #fff5e8; intensity: 0.56"></a-entity>
+
+    //地面参考：玩家高度由 walk-controls 固定，碰撞范围由 WORLD.path 定义.//
+    <a-plane position="3 -0.04 31" rotation="-90 0 0" width="32" height="122"
+      material="transparent: true; opacity: 0"></a-plane>
+
+    //四道互动门：依次被四个物体解锁，并触发阶段转换.//
+    <a-entity id="door0" class="threshold-door" position="7.95 1.35 73" transition-door="index: 0">
+      <a-box class="door-left" position="-1 0 0" width="2" height="2.7" depth="0.12" material="color: #14191f; emissive: #5b3215; emissiveIntensity: 0.18"></a-box>
+      <a-box class="door-right" position="1 0 0" width="2" height="2.7" depth="0.12" material="color: #14191f; emissive: #5b3215; emissiveIntensity: 0.18"></a-box>
+      <a-ring radius-inner="0.08" radius-outer="0.13" position="0 0.2 0.09" material="shader: flat; color: #ff9948"></a-ring>
+    </a-entity>
+
+    <a-entity id="door1" class="threshold-door" position="0.96 1.35 59.6" transition-door="index: 1">
+      <a-box class="door-left" position="-1 0 0" width="2" height="2.7" depth="0.12" material="color: #16191d; emissive: #5b3215; emissiveIntensity: 0.18"></a-box>
+      <a-box class="door-right" position="1 0 0" width="2" height="2.7" depth="0.12" material="color: #16191d; emissive: #5b3215; emissiveIntensity: 0.18"></a-box>
+      <a-ring radius-inner="0.08" radius-outer="0.13" position="0 0.2 0.09" material="shader: flat; color: #ff9948"></a-ring>
+    </a-entity>
+
+    <a-entity id="door2" class="threshold-door" position="1.05 1.35 13.3" transition-door="index: 2">
+      <a-box class="door-left" position="-1 0 0" width="2" height="2.7" depth="0.12" material="color: #17171b; emissive: #682319; emissiveIntensity: 0.22"></a-box>
+      <a-box class="door-right" position="1 0 0" width="2" height="2.7" depth="0.12" material="color: #17171b; emissive: #682319; emissiveIntensity: 0.22"></a-box>
+      <a-ring radius-inner="0.08" radius-outer="0.13" position="0 0.2 0.09" material="shader: flat; color: #ff765c"></a-ring>
+    </a-entity>
+
+    <a-entity id="door3" class="threshold-door" position="1.55 1.35 -17.8" transition-door="index: 3">
+      <a-box class="door-left" position="-1 0 0" width="2" height="2.7" depth="0.12" material="color: #161a1d; emissive: #243f3a; emissiveIntensity: 0.2"></a-box>
+      <a-box class="door-right" position="1 0 0" width="2" height="2.7" depth="0.12" material="color: #161a1d; emissive: #243f3a; emissiveIntensity: 0.2"></a-box>
+      <a-ring radius-inner="0.08" radius-outer="0.13" position="0 0.2 0.09" material="shader: flat; color: #8fe2ca"></a-ring>
+    </a-entity>
+
+    //互动 1：呼吸球，是开头的第一个引导目标.//
+    <a-entity id="object0" class="touch-object" position="7.95 1.05 74.95"
+      touch-trigger="index: 0; radius: 1.05" object-reaction="index: 0" beacon-state="active: true">
+      <a-sphere class="object-form beacon-core" radius="0.34" material="shader: flat; color: #ff9b4a; emissive: #ff6a28; emissiveIntensity: 1"></a-sphere>
+      <a-torus class="beacon-ring" radius="0.5" radius-tubular="0.012" rotation="90 0 0" material="shader: flat; color: #ffd5a8; transparent: true; opacity: 0.8"></a-torus>
+      <a-light class="beacon-light" type="point" color="#ff7a32" intensity="1.1" distance="7"></a-light>
+    </a-entity>
+
+    //互动 2：悬浮纸张，触碰后向两侧展开.//
+    <a-entity id="object1" class="touch-object locked" position="6.15 1.35 65"
+      touch-trigger="index: 1; radius: 1.2" object-reaction="index: 1" beacon-state="active: false">
+      <a-plane class="paper paper-a" position="-0.22 0 0" rotation="0 6 4" width="0.52" height="0.72" material="side: double; color: #d8d2c7"></a-plane>
+      <a-plane class="paper paper-b" position="0.22 0.04 0.03" rotation="0 -7 -5" width="0.52" height="0.72" material="side: double; color: #c7c2bb"></a-plane>
+      <a-entity position="0 0.68 0">
+        <a-sphere class="beacon-core" radius="0.13" material="shader: flat; color: #513d31; emissive: #ff8b45; emissiveIntensity: 0.15"></a-sphere>
+        <a-torus class="beacon-ring" radius="0.24" radius-tubular="0.009" rotation="90 0 0" material="shader: flat; color: #ffb676; transparent: true; opacity: 0.16"></a-torus>
+        <a-light class="beacon-light" type="point" color="#ff8b45" intensity="0" distance="7"></a-light>
+      </a-entity>
+    </a-entity>
+
+    //互动 3：长椅和灯带，触碰后移到一旁让路.//
+    <a-entity id="object2" class="touch-object locked" position="0.35 0.43 27"
+      touch-trigger="index: 2; radius: 1.35" object-reaction="index: 2" beacon-state="active: false">
+      <a-box class="bench-form" width="1.4" height="0.46" depth="0.72" material="color: #24282b; roughness: 0.9"></a-box>
+      <a-box class="signal-strip" position="0 0.25 0.365" width="1.2" height="0.035" depth="0.02" material="shader: flat; color: #51352d; emissive: #ff754d; emissiveIntensity: 0.12"></a-box>
+      <a-entity position="0 1.08 0">
+        <a-sphere class="beacon-core" radius="0.13" material="shader: flat; color: #513d31; emissive: #ff6f59; emissiveIntensity: 0.15"></a-sphere>
+        <a-torus class="beacon-ring" radius="0.24" radius-tubular="0.009" rotation="90 0 0" material="shader: flat; color: #ff917b; transparent: true; opacity: 0.16"></a-torus>
+        <a-light class="beacon-light" type="point" color="#ff6756" intensity="0" distance="7"></a-light>
+      </a-entity>
+    </a-entity>
+
+    //互动 4：终点灯，打开通往安静空间的门.//
+    <a-entity id="object3" class="touch-object locked" position="1.55 1.15 -15"
+      touch-trigger="index: 3; radius: 1.15" object-reaction="index: 3" beacon-state="active: false">
+      <a-entity class="object-form beacon-core" geometry="primitive: dodecahedron; radius: 0.34" material="shader: flat; color: #463437; emissive: #ff6b63; emissiveIntensity: 0.12"></a-entity>
+      <a-torus class="beacon-ring" radius="0.54" radius-tubular="0.014" rotation="90 0 0" material="shader: flat; color: #ff9289; transparent: true; opacity: 0.15"></a-torus>
+      <a-torus radius="0.43" radius-tubular="0.008" rotation="0 0 90" material="shader: flat; color: #ffd0cc; transparent: true; opacity: 0.12"></a-torus>
+      <a-light class="beacon-light" type="point" color="#ff665d" intensity="0" distance="8"></a-light>
+    </a-entity>
+
+    //结尾：白场逐渐退去后出现的短暂安静空间.//
+    <a-plane position="1.55 0 -18.1" rotation="-90 0 0" width="3.2" height="1.2" material="color: #9aa79f; roughness: 1"></a-plane>
+    <a-entity id="quietRoom" position="1.55 0 -22.7" rotation="0 180 0">
+      <a-plane rotation="-90 0 0" width="5.4" height="8.5" material="color: #9aa79f; roughness: 1"></a-plane>
+      <a-plane position="0 2.8 0" rotation="90 0 0" width="5.4" height="8.5" material="color: #8d9a94; roughness: 1"></a-plane>
+      <a-plane position="-2.7 1.4 0" rotation="0 90 0" width="8.5" height="2.8" material="color: #65726d; roughness: 1"></a-plane>
+      <a-plane position="2.7 1.4 0" rotation="0 -90 0" width="8.5" height="2.8" material="color: #65726d; roughness: 1"></a-plane>
+      <a-plane position="0 1.4 4.25" rotation="0 180 0" width="5.4" height="2.8" material="color: #65726d; roughness: 1"></a-plane>
+      <a-light type="point" position="0 2.25 1" color="#d7fff2" intensity="0.82" distance="10"></a-light>
+      <a-sphere position="0 1.15 1.7" radius="0.18" material="shader: flat; color: #d6fff1; emissive: #a3e9d5; emissiveIntensity: 0.75"></a-sphere>
+    </a-entity>
+
+    //玩家：空气墙与惯性在父实体，鼠标视角在子摄像机.//
+    <a-entity id="player" position="8 0 77.35" walk-controls>
+      <a-camera id="camera" position="0 1.62 0" rotation="0 0 0" fov="72"
+        wasd-controls="enabled: false"
+        look-controls="pointerLockEnabled: true; touchEnabled: true; magicWindowTrackingEnabled: false">
+      </a-camera>
+    </a-entity>
+  </a-scene>
+</body>
+</html>
